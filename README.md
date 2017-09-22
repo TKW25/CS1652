@@ -1,12 +1,6 @@
 # CS1652
 
 ## Temporary TODO
-
-Write a useful makefile since makefile.in doesn't seem particularly useful
-
-    Incomplete
-
-
 Implement http_client.cpp
 
      Everything
