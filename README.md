@@ -1,6 +1,6 @@
 # CS1652
 
-# Temporary TODO
+## Temporary TODO
 
 Write a useful makefile since makefile.in doesn't seem particularly useful
 
@@ -24,7 +24,7 @@ Implement http_server3.cpp
      Everything
      
 
-# Group Members
+## Group Members
 Taimah Williams:
 
     E-mail: tkw10@pitt.edu
@@ -36,11 +36,11 @@ Bob Colleran:
     
     Username: rjc59
     
-# Included files
+## Included files
 TBD
 
-# Compilation steps
+## Compilation steps
 TBD
 
-# Not working
+## Not working
 Nothing (hopefully)
