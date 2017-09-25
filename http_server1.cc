@@ -34,20 +34,23 @@ int main(int argc, char * argv[]) {
     
     /* set server address*/
     struct sockaddr_in ip4addr;
+    memset(&ip4addr, 0, sizeof(ip4addr));
     ip4addr.sin_family = AF_INET;
-    ip4addr.sin_port = server_port;
-    inet_pton(AF_INET, "10.0.0.1", &ip4addr.sin_addr);
-
+    ip4addr.sin_port = htons(server_port);
+    ip4addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+    //memset(ip4addr.sin_zero, '\0', sizeof(ip4addr.sin_zero));
+    //inet_pton(AF_INET, "10.0.0.1", &ip4addr.sin_addr);
     /* bind listening socket */
-    minet_bind(sock, &ip4addr);
-
+    int mii = minet_bind(sock, &ip4addr);
+    printf("%d", mii);
     /* start listening */
-    minet_listen(sock, BACKLOG);
-
+    mii = minet_listen(sock, BACKLOG);
+    printf("%d", mii);
     /* connection handling loop: wait to accept connection */
     int connfd;
     struct sockaddr_in addrs;
     while (1) {
+	printf("In loop\n");
 	connfd = minet_accept(sock, &addrs);
 	if(connfd != -1){
 	    /* handle connections */
@@ -74,16 +77,21 @@ int handle_connection(int sock) {
     memset(buffer, '\0', BUFSIZE);
     //A second buffer to handle telnet and other high latency connections
     char b_buffer[BUFSIZE];
-    memset(buffer, '\0', BUFSIZE);
+    memset(b_buffer, '\0', BUFSIZE);
     
+
+
     //minet_read returning 0 -> socket closed
     while(minet_read(sock, buffer, BUFSIZE) != 0){
+	if(strcmp(buffer, "\r\n") == 0)
+	    break;
 	strcat(b_buffer, buffer);
 	memset(buffer, '\0', BUFSIZE);
     }
+    printf(b_buffer);
     /* parse request to get file name */
     /* Assumption: this is a GET request and filename contains no spaces*/
-    char *str = strtok(buffer, " /\n");
+    char *str = strtok(b_buffer, " /\n");
     char *file = NULL;
     while(str != NULL){
 	if(!strcmp(str, "GET")){
@@ -109,7 +117,7 @@ int handle_connection(int sock) {
 		perror("Couldn't return to file start.\n");
 		return NULL;
 	    }
-	    
+	    fread(contents, sizeof(char), fsize, fp);
 	    if(ferror(fp) != 0){
 		perror("Error reading file");
 	    }
@@ -122,6 +130,7 @@ int handle_connection(int sock) {
     }
     /* send response */
     if (ok) {
+	printf(contents);
 	/* send headers */
 	char outp[strlen(ok_response_f)];
 	sprintf(outp, ok_response_f, fsize); 
@@ -131,6 +140,7 @@ int handle_connection(int sock) {
 	
     } else {
 	// send error response
+	printf("hi");
 	minet_write(sock, strdup(notok_response), strlen(notok_response)*sizeof(char));
     }
     
