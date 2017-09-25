@@ -1,19 +1,19 @@
 # CS1652
 
 ## Temporary TODO
-Implement http_client.cpp
+Implement http_client.cc
 
      Everything
      
-Implement http_server1.cpp
+Implement http_server1.cc
+
+     Test for errors and bugs
+     
+Implement http_server2.cc
 
      Everything
      
-Implement http_server2.cpp
-
-     Everything
-     
-Implement http_server3.cpp
+Implement http_server3.cc
 
      Everything
      

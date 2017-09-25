@@ -95,7 +95,7 @@ int handle_connection(int sock) {
     char *file = NULL;
     while(str != NULL){
 	if(!strcmp(str, "GET")){
-	    str = strtok(NULL, " \n");
+	    str = strtok(NULL, " /\n");
 	    file = str;
 	    break; //For now we don't care about anything else
 	}
@@ -146,6 +146,7 @@ int handle_connection(int sock) {
     
     /* close socket and free space */
     minet_close(sock);
+    free(contents);
 
     if (ok) {
 	return 0;
