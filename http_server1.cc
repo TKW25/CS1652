@@ -104,8 +104,8 @@ int handle_connection(int sock) {
 		return NULL;
 	    }
 	    
-	    contents = malloc(sizeof(char) * (fsize + 1));
-	    if(fseek(fp, OL, SEEK_SET) != 0){
+	    contents = (char *) malloc(sizeof(char) * (fsize + 1));
+	    if(fseek(fp, 0L, SEEK_SET) != 0){
 		perror("Couldn't return to file start.\n");
 		return NULL;
 	    }
@@ -123,13 +123,15 @@ int handle_connection(int sock) {
     /* send response */
     if (ok) {
 	/* send headers */
-	minet_write(sock, ok_response_f % fsize, strlen(ok_response_f)*sizeof(char));	
+	char outp[strlen(ok_response_f)];
+	sprintf(outp, ok_response_f, fsize); 
+	minet_write(sock, outp, strlen(ok_response_f)*sizeof(char));	
 	/* send file */
 	minet_write(sock, contents, fsize + 1);
 	
     } else {
 	// send error response
-	minet_write(sock, notok_response, strlen(notok_response)*sizeof(char));
+	minet_write(sock, strdup(notok_response), strlen(notok_response)*sizeof(char));
     }
     
     /* close socket and free space */
