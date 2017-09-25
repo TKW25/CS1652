@@ -7,7 +7,8 @@ Implement http_client.cc
      
 Implement http_server1.cc
 
-     Done, more extensive testing should be done after we finish the client but it passed the basic tests I ran it through
+     Done, more extensive testing should be done after we finish the client,
+     but it passed the basic tests I ran it through
      
 Implement http_server2.cc
 
