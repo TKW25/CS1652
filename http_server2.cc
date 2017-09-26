@@ -1,11 +1,6 @@
-#include "minet_socket.h"
-#include <stdlib.h>
-#include <fcntl.h>
-#include <ctype.h>
-#include <sys/stat.h>
-
 #define BUFSIZE 1024
 #define FILENAMESIZE 100
+#define BACKLOG 5 //Incoming connection queue size, only a suggestion it seems
 
 int handle_connection(int sock);
 
@@ -13,6 +8,7 @@ int main(int argc, char * argv[]) {
     int server_port = -1;
     int rc          =  0;
     int sock        = -1;
+    printf("Starting\n");
 
     /* parse command line args */
     if (argc != 3) {
@@ -26,16 +22,37 @@ int main(int argc, char * argv[]) {
 	fprintf(stderr, "INVALID PORT NUMBER: %d; can't be < 1500\n", server_port);
 	exit(-1);
     }
-    
+
     /* initialize and make socket */
+    minet_init(MINET_KERNEL); 
+    if((sock = minet_socket(SOCK_STREAM)) == -1){
+	perror("Error creating socket");
+	return 1;
+    }
 
     /* set server address*/
+    struct sockaddr_in ip4addr;
+    memset(&ip4addr, 0, sizeof(ip4addr));
+    ip4addr.sin_family = AF_INET;
+    ip4addr.sin_port = htons(server_port);
+    //I'm not actually sure what we're suppose to set our addrss to
+    inet_pton(AF_INET, "127.0.0.1", &ip4addr.sin_addr);
 
     /* bind listening socket */
+    if(minet_bind(sock, &ip4addr) == -1){
+	perror("Error binding socket, port probably in use");
+	return 1;
+    }
 
     /* start listening */
+    if(minet_listen(sock, BACKLOG) == -1){
+	perror("Too many connections");
+	return 1;
+    }
 
     /* connection handling loop: wait to accept connection */
+    int connfd;
+    struct sockaddr_in addrs;
 
     while (1) {
 	
