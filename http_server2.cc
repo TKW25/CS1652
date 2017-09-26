@@ -124,32 +124,101 @@ int handle_connection(int sock) {
     const char * ok_response_f = "HTTP/1.0 200 OK\r\n"	\
 	"Content-type: text/plain\r\n"			\
 	"Content-length: %d \r\n\r\n";
-    
+ 
     const char * notok_response = "HTTP/1.0 404 FILE NOT FOUND\r\n"	\
 	"Content-type: text/html\r\n\r\n"			\
 	"<html><body bgColor=black text=white>\n"		\
-	"<h2>404 FILE NOT FOUND</h2>\n"				\
+	"<h2>404 FILE NOT FOUND</h2>\n"
 	"</body></html>\n";
-    
-    /* first read loop -- get request and headers*/
 
+    /* first read loop -- get request and headers*/
+    char buffer[BUFSIZE];
+    memset(buffer, '\0', BUFSIZE);
+    //A second buffer to handle telnet and other high latency connections
+    char b_buffer[BUFSIZE];
+    memset(b_buffer, '\0', BUFSIZE)
+;
+    //minet_read returning 0 -> socket closed
+    while(minet_read(sock, buffer, BUFSIZE - 1) != 0){
+	//Check for blank line, we might need to expand this to work with \n too
+	if(strcmp(buffer, "\r\n") == 0) 
+	    break;
+	strcat(b_buffer, buffer);
+	memset(buffer, '\0', BUFSIZE);
+    }
     /* parse request to get file name */
     /* Assumption: this is a GET request and filename contains no spaces*/
+    char *str = strtok(b_buffer, " /\n");
+    char *file = NULL;
+
+    /* Given our assumptions this loop shouldn't do anything other than
+     * quickly grab the file name, but I figure a loop would be necessary
+     * for more complex requests we may need to handle in the future */
+    while(str != NULL){
+	if(!strcmp(str, "GET")){
+	    str = strtok(NULL, " /\n");
+	    file = str;
+	    break; //For now we don't care about anything else
+	}
+	else{ //Placeholder mostly for testing the loop's behavior
+	   str = strtok(NULL, " /\n");
+	}
+    }
 
     /* try opening the file */
+    FILE *fp = fopen(str, "r");
+    long fsize;
+    char *contents = NULL;
+    if(fp){
+	if(fseek(fp, 0L, SEEK_END) == 0){
+	    fsize = ftell(fp);
+	    if(fsize == -1){
+		perror("Bad buffer size\n");
+		minet_close(sock);
+		return NULL;
+	    }
+	    
+	    contents = (char *) malloc(sizeof(char) * (fsize + 1));
 
+	    if(fseek(fp, 0L, SEEK_SET) != 0){
+		perror("Couldn't return to file start.\n");
+		minet_close(sock);
+		return NULL;
+	    }
+
+	    fread(contents, sizeof(char), fsize, fp);
+
+	    if(ferror(fp) != 0){
+		perror("Error reading file");
+		minet_close(sock);
+		return NULL;
+	    }
+	    else{
+		contents[fsize + 1] = '\0';
+	    }
+
+	    ok = true;
+	}
+	fclose(fp);
+    }
     /* send response */
     if (ok) {
 	/* send headers */
-	
+	char outp[strlen(ok_response_f)];
+	sprintf(outp, ok_response_f, fsize); 
+	minet_write(sock, outp, strlen(ok_response_f)*sizeof(char));	
 	/* send file */
+	minet_write(sock, contents, fsize + 1);
 	
     } else {
 	// send error response
+	minet_write(sock, strdup(notok_response), strlen(notok_response)*sizeof(char));
     }
-
+    
     /* close socket and free space */
-  
+    minet_close(sock);
+    free(contents);
+    printf("Done...\n");
     if (ok) {
 	return 0;
     } else {
