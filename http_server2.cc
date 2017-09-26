@@ -35,7 +35,7 @@ int main(int argc, char * argv[]) {
 	perror("Error creating socket");
 	return 1;
     }
-
+    printf("1\n");
     /* set server address*/
     struct sockaddr_in ip4addr;
     memset(&ip4addr, 0, sizeof(ip4addr));
@@ -69,6 +69,7 @@ int main(int argc, char * argv[]) {
     int i; //for loop counter
     int max_connections = 100; //Maximum number of active connections
     int socketfds[max_connections]; //array holding socket file descriptors
+    printf("2\n");
     while (1) {
 	/* create read list */
 	FD_ZERO(&readfds);
