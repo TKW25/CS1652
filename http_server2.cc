@@ -35,7 +35,6 @@ int main(int argc, char * argv[]) {
 	perror("Error creating socket");
 	return 1;
     }
-    printf("1\n");
     /* set server address*/
     struct sockaddr_in ip4addr;
     memset(&ip4addr, 0, sizeof(ip4addr));
@@ -62,16 +61,16 @@ int main(int argc, char * argv[]) {
     struct sockaddr_in addrs; //temporary sockaddr_in
     fd_set readfds; 
     struct timeval tv; //timeout value
-    tv.tv_sec = 10;
-    tv.tv_usec = 50000;
     int max; //largest file descriptor, needed for select
     int rv; //return value for select
     int i; //for loop counter
     int max_connections = 100; //Maximum number of active connections
-    int socketfds[max_connections]; //array holding socket file descriptors
-    printf("2\n");
+    int socketfds[100] = {0}; //array holding socket file descriptors
     while (1) {
 	/* create read list */
+	rv = 1;
+	tv.tv_sec = 10;
+	tv.tv_usec = 50000;
 	FD_ZERO(&readfds);
 	FD_SET(sock, &readfds);
 	max = sock;
@@ -95,6 +94,12 @@ int main(int argc, char * argv[]) {
 	}
 	else if(rv == 0){
 	    printf("Timeout. No data received after 10.5 seconds\n");
+	    for(i = 0; i < max_connections; i++){
+		char const *msg = "Connection timeout.  Closing connection...";
+		minet_write(socketfds[i], strdup(msg), strlen(msg) * sizeof(char));
+	    	minet_close(socketfds[i]);
+		socketfds[i] = 0;
+	    }
 	}
 	else{
 	    /* for the accept socket, add accepted connection to connections */
