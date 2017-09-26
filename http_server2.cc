@@ -1,3 +1,9 @@
+#include "minet_socket.h"
+#include <stdlib.h>
+#include <fcntl.h>
+#include <ctype.h>
+#include <sys/stat.h>
+
 #define BUFSIZE 1024
 #define FILENAMESIZE 100
 #define BACKLOG 5 //Incoming connection queue size, only a suggestion it seems
@@ -51,23 +57,64 @@ int main(int argc, char * argv[]) {
     }
 
     /* connection handling loop: wait to accept connection */
-    int connfd;
-    struct sockaddr_in addrs;
-
+    /* declare variables for loop */
+    int connfd; //temporary socket descriptor
+    struct sockaddr_in addrs; //temporary sockaddr_in
+    fd_set readfds; 
+    struct timeval tv; //timeout value
+    tv.tv_sec = 10;
+    tv.tv_usec = 50000;
+    int max; //largest file descriptor, needed for select
+    int rv; //return value for select
+    int i; //for loop counter
+    int max_connections = 100; //Maximum number of active connections
+    int socketfds[max_connections]; //array holding socket file descriptors
     while (1) {
-	
 	/* create read list */
+	FD_ZERO(&readfds);
+	FD_SET(sock, &readfds);
+	max = sock;
 	
+	for(i = 0; i < max_connections; i++){
+	    connfd = socketfds[i];
+	    
+	    if(connfd > 0){
+		FD_SET(connfd, &readfds);
+	    }
+	    
+	    if(connfd > max){
+		max = connfd;
+	    }
+	}
 	/* do a select */
-	
+	rv = minet_select(max + 1, &readfds, NULL, NULL, &tv);
 	/* process sockets that are ready */
-	
-	/* for the accept socket, add accepted connection to connections */
-	
-	/* for a connection socket, handle the connection */
-	
-	rc = handle_connection(sock);
-	
+	if(rv == -1){
+	    perror("error in select");
+	}
+	else if(rv == 0){
+	    printf("Timeout. No data received after 10.5 seconds\n");
+	}
+	else{
+	    /* for the accept socket, add accepted connection to connections */
+	    if(FD_ISSET(sock, &readfds)){
+		for(i = 0; i < max_connections; i++){
+		   if(socketfds[i] <= 0){
+			socketfds[i] = minet_accept(sock, &addrs);
+			break;
+		   } 
+		}
+	    }
+	    else{
+		/* for a connection socket, handle the connection */
+		for(i = 0; i < max_connections; i++){
+		    if(FD_ISSET(socketfds[i], &readfds)){
+			rc = handle_connection(socketfds[i]);
+			socketfds[i] = 0;
+		    }
+		}		
+	    }
+	}
     }
 }
 
