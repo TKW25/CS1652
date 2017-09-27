@@ -106,7 +106,7 @@ int main(int argc, char * argv[]) {
           }
           block[3] = '\0';
 
-          if (strcmp(block, "\n\r\n" == 0))
+          if (strcmp(block, "\n\r\n") == 0)
             break;
         }
       } while(reader > 0);
