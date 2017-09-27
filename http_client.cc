@@ -18,7 +18,7 @@ int main(int argc, char * argv[]) {
     struct timeval timeout;
     char header[12];
     int response;
-    int read_header;
+    int reader;
     char c[1];
     char block[4];
 
@@ -49,6 +49,10 @@ int main(int argc, char * argv[]) {
     /* get host IP address  */
     /* Hint: use gethostbyname() */
     host = gethostbyname(server_name);
+    if (host == NULL){
+      fprintf(stderr, "host not found\n");
+      exit(-1);
+    }
 
     /* set address */
     memset(&address, 0, sizeof(address));
@@ -58,6 +62,14 @@ int main(int argc, char * argv[]) {
 
     /* connect to the server socket */
     minet_connect(fd, (struct sockaddr_in *)&address);
+<<<<<<< HEAD
+=======
+    if (minet_connect < 0){
+      fprintf(stderr, "connect failed\n");
+      exit(-1);
+    }
+
+>>>>>>> 62fe52b1f3ce1fda5091e2217d6636eded92aa14
     /* send request message */
     //sprintf(req, "GET %s HTTP/1.0\r\n\r\n", server_path);
     //minet_write(fd, req, strlen(req)*sizeof(char));
@@ -77,33 +89,56 @@ int main(int argc, char * argv[]) {
     /* Hint: use select(), and ignore timeout for now. */
     /* first read loop -- read headers */
     minet_read(fd, header, 12);
+    if (minet_read <= 0){
+      fprintf(stderr, "couldn't read header");
+      exit(-1);
+    }
     response = atoi(header + 9);
     /* examine return code */
     if (response == 200){     // Normal reply has return code 200
+<<<<<<< HEAD
 	printf("%s", header);	
 	/*do{
         read_header = minet_read(fd, c, 1);
 	if (strcmp(c, "\r") == 0){
+=======
+      do{
+        reader = read(fd, c, 1);
+
+        if (*c == '\r'){
+>>>>>>> 62fe52b1f3ce1fda5091e2217d6636eded92aa14
           minet_read(fd, block, 3);
+          if (minet_read < 0){
+            fprintf(stderr, "Could not read block in header");
+            exit(-1);
+          }
           block[3] = '\0';
+<<<<<<< HEAD
 	  printf("this doesnt run does it\n");
           if (strcmp(block, "\n\r\n") == 0)
             break;
         }
       } while(read_header > 0); */
+=======
+
+          if (strcmp(block, "\n\r\n") == 0)
+            break;
+        }
+      } while(reader > 0);
+>>>>>>> 62fe52b1f3ce1fda5091e2217d6636eded92aa14
       do {
-        read_header = minet_read(fd, c, 1);
-        if (read_header > 0)
+        reader = minet_read(fd, c, 1);
+        if (reader > 0)
           printf("%c", c[0]);
-      } while(read_header > 0);
+      } while(reader > 0);
     }
     else {
       printf("%s", header);
       do{
-        read_header = minet_read(fd, c, 1);
-        if (read_header > 0)
+        reader = minet_read(fd, c, 1);
+        if (read > 0)
           printf("%c", c[0]);
-      } while(read_header > 0);
+      } while(reader > 0);
     }
     minet_close(fd);
     free(req);
