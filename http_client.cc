@@ -3,6 +3,7 @@
 #include <ctype.h>
 
 #define BUFSIZE 1024
+
 int main(int argc, char * argv[]) {
 
     char * server_name = NULL;
@@ -10,6 +11,16 @@ int main(int argc, char * argv[]) {
     char * server_path = NULL;
     char * req         = NULL;
     bool ok            = false;
+
+    struct hostent *host;
+    struct sockaddr_in address;
+    fd_set fdset;
+    struct timeval timeout;
+    char header[12];
+    int response;
+    int read_header;
+    char c[1];
+    char block[4];
 
     /*parse args */
     if (argc != 5) {
@@ -21,13 +32,13 @@ int main(int argc, char * argv[]) {
     server_port = atoi(argv[3]);
     server_path = argv[4];
 
-    req = (char *)malloc(strlen("GET  HTTP/1.0\r\n\r\n") 
-			 + strlen(server_path) + 1);  
+    req = (char *)malloc(strlen("GET  HTTP/1.0\r\n\r\n")
+			 + strlen(server_path) + 1);
 
     /* initialize */
-    if (toupper(*(argv[1])) == 'K') { 
+    if (toupper(*(argv[1])) == 'K') {
 	minet_init(MINET_KERNEL);
-    } else if (toupper(*(argv[1])) == 'U') { 
+    } else if (toupper(*(argv[1])) == 'U') {
 	minet_init(MINET_USER);
     } else {
 	fprintf(stderr, "First argument must be k or u\n");
@@ -35,33 +46,68 @@ int main(int argc, char * argv[]) {
     }
 
     /* make socket */
+    int fd = minet_socket(SOCK_STREAM);
 
     /* get host IP address  */
     /* Hint: use gethostbyname() */
+    host = gethostbyname(server_name);
 
     /* set address */
+    memset(&address, 0, sizeof(address));
+    address.sin_family = AF_INET;
+    address.sin_port = htons(server_port);
+    memcpy(&address.sin_addr.s_addr, host->h_addr, host->h_length);
 
     /* connect to the server socket */
+    minet_connect(fd, (struct sockaddr_in *)&address < 0);
 
     /* send request message */
     sprintf(req, "GET %s HTTP/1.0\r\n\r\n", server_path);
+    minet_write(fd, req, strlen(req));
+
+    timeout.tv_sec = 10;
+    timeout.tv_usec = 1000000;
 
     /* wait till socket can be read. */
+    FD_ZERO(&fdset);
+    FD_SET(fd, &fdset);
+    minet_select(fd + 1, &fdset, NULL, NULL, &timeout);
     /* Hint: use select(), and ignore timeout for now. */
 
     /* first read loop -- read headers */
+    minet_read(fd, header, 12);
+    response = atoi(header + 9);
 
-    /* examine return code */   
+    /* examine return code */
+    if (response == 200){     // Normal reply has return code 200
+      do{
+        read_header = read(fd, c, 1);
 
-    //Skip "HTTP/1.0"
-    //remove the '\0'
+        if (*c == '/r'){
+          minet_read(fd, block, 3);
+          block[3] = '\0';
 
-    // Normal reply has return code 200
+          if (strcmp(block, "\n\r\n" == 0))
+            break;
+        }
+      } while(read_header > 0);
+      do {
+        read_header = minet_read(fd, c, 1);
+        if (read_header > 0)
+          printf("%c", c[0]);
+      } while(read_header > 0);
+    }
+    else {
+      printf("%s", header);
+      do{
+        read_header = minet_read(fd, c, 1);
+        if (read_header > 0)
+          printf("%c", c[0]);
+      } while(read_header > 0);
+    }
 
-    /* print first part of response: header, error code, etc. */
-
-    /* second read loop -- print out the rest of the response: real web content */
-
+    minet_close(fd);
+    free(req);
     /*close socket and deinitialize */
 
     if (ok) {
