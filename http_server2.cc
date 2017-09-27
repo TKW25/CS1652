@@ -14,7 +14,7 @@ int main(int argc, char * argv[]) {
     int server_port = -1;
     int rc          =  0;
     int sock        = -1;
-    printf("Starting\n");
+    printf("Starting Server...\n");
 
     /* parse command line args */
     if (argc != 3) {
@@ -87,18 +87,20 @@ int main(int argc, char * argv[]) {
 	    }
 	}
 	/* do a select */
-	rv = minet_select(max + 1, &readfds, NULL, NULL, &tv);
+	rv = minet_select(max + 1, &readfds, NULL, NULL, NULL);
 	/* process sockets that are ready */
 	if(rv == -1){
 	    perror("error in select");
 	}
-	else if(rv == 0){
+	else if(rv == 0){ //Not certain if we even need this but I wrote it just in case
 	    printf("Timeout. No data received after 10.5 seconds\n");
 	    for(i = 0; i < max_connections; i++){
-		char const *msg = "Connection timeout.  Closing connection...";
-		minet_write(socketfds[i], strdup(msg), strlen(msg) * sizeof(char));
-	    	minet_close(socketfds[i]);
-		socketfds[i] = 0;
+		char const *msg = "Connection timeout.  Closing connection...\n";
+	    	if(socketfds > 0){
+		    minet_write(socketfds[i], strdup(msg), strlen(msg) * sizeof(char));
+		    minet_close(socketfds[i]);
+		    socketfds[i] = 0;
+		}
 	    }
 	}
 	else{
@@ -110,13 +112,15 @@ int main(int argc, char * argv[]) {
 			break;
 		   } 
 		}
+		//No available sockets, connection refused?
 	    }
 	    else{
 		/* for a connection socket, handle the connection */
 		for(i = 0; i < max_connections; i++){
 		    if(FD_ISSET(socketfds[i], &readfds)){
+			printf("Handling Connection\n");
 			rc = handle_connection(socketfds[i]);
-			socketfds[i] = 0;
+			socketfds[i] = 0; //Connection closed in handle, so update our list
 		    }
 		}		
 	    }
@@ -146,8 +150,8 @@ int handle_connection(int sock) {
 ;
     //minet_read returning 0 -> socket closed
     while(minet_read(sock, buffer, BUFSIZE - 1) != 0){
-	//Check for blank line, we might need to expand this to work with \n too
-	if(strcmp(buffer, "\r\n") == 0) 
+	//Check for blank line signifying connection closed
+	if((strcmp(buffer, "\r\n") == 0) | (strcmp(buffer, "\n") == 0)) 
 	    break;
 	strcat(b_buffer, buffer);
 	memset(buffer, '\0', BUFSIZE);
@@ -218,13 +222,15 @@ int handle_connection(int sock) {
 	
     } else {
 	// send error response
-	minet_write(sock, strdup(notok_response), strlen(notok_response)*sizeof(char));
+	char outp[strlen(notok_response)];
+	sprintf(outp, notok_response);
+	minet_write(sock, outp, strlen(notok_response)*sizeof(char));
     }
     
     /* close socket and free space */
     minet_close(sock);
     free(contents);
-    printf("Done...\n");
+    printf("Done with connection...\n");
     if (ok) {
 	return 0;
     } else {
