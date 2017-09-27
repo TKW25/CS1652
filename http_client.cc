@@ -62,7 +62,10 @@ int main(int argc, char * argv[]) {
     minet_connect(fd, (struct sockaddr_in *)&address < 0);
 
     /* send request message */
-    sprintf(req, "GET %s HTTP/1.0\r\n\r\n", server_path);
+    if (server_path[0] == '/')
+      sprintf(req, "GET %s HTTP/1.0\r\n\r\n", server_path);
+    else
+      sprintf(req, "GET /%s HTTP/1.0\r\n\r\n", server_path);
     minet_write(fd, req, strlen(req));
 
     timeout.tv_sec = 10;
