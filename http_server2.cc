@@ -200,14 +200,13 @@ int handle_connection(int sock) {
 
 	    if(ferror(fp) != 0){
 		perror("Error reading file");
-		minet_close(sock);
-		return NULL;
+	//	minet_close(sock);
+	//	return NULL;
 	    }
 	    else{
 		contents[fsize + 1] = '\0';
+		ok = true;
 	    }
-
-	    ok = true;
 	}
 	fclose(fp);
     }
