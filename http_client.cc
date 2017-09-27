@@ -34,7 +34,7 @@ int main(int argc, char * argv[]) {
 
     req = (char *)malloc(strlen("GET  HTTP/1.0\r\n\r\n")
 			 + strlen(server_path) + 1);
-
+    printf("Hello3\n");
     /* initialize */
     if (toupper(*(argv[1])) == 'K') {
 	minet_init(MINET_KERNEL);
@@ -44,7 +44,7 @@ int main(int argc, char * argv[]) {
 	fprintf(stderr, "First argument must be k or u\n");
 	exit(-1);
     }
-
+    printf("ree\n");
     /* make socket */
     int fd = minet_socket(SOCK_STREAM);
 
@@ -59,35 +59,36 @@ int main(int argc, char * argv[]) {
     memcpy(&address.sin_addr.s_addr, host->h_addr, host->h_length);
 
     /* connect to the server socket */
-    minet_connect(fd, (struct sockaddr_in *)&address < 0);
-
+    minet_connect(fd, (struct sockaddr_in *)&address);
+    printf("usdklfsdjklfsjdklfsjkld\n");
     /* send request message */
     sprintf(req, "GET %s HTTP/1.0\r\n\r\n", server_path);
-    minet_write(fd, req, strlen(req));
-
+    printf("uisdiuusdufsu\n");
+    minet_write(fd, req, strlen(req)*sizeof(char));
+    printf("skjdfkljsdfjls\n");
     timeout.tv_sec = 10;
     timeout.tv_usec = 1000000;
 
     /* wait till socket can be read. */
     FD_ZERO(&fdset);
     FD_SET(fd, &fdset);
-    minet_select(fd + 1, &fdset, NULL, NULL, &timeout);
+    printf("fuck\n");
+    minet_select(fd + 1, &fdset, NULL, NULL, NULL);
     /* Hint: use select(), and ignore timeout for now. */
-
+    printf("u\n");
     /* first read loop -- read headers */
     minet_read(fd, header, 12);
     response = atoi(header + 9);
-
+    printf("Hello2:\n");
     /* examine return code */
     if (response == 200){     // Normal reply has return code 200
       do{
         read_header = read(fd, c, 1);
-
-        if (*c == '/r'){
+	if (strcmp(c, "/r") == 0){
           minet_read(fd, block, 3);
           block[3] = '\0';
 
-          if (strcmp(block, "\n\r\n" == 0))
+          if (strcmp(block, "\n\r\n") == 0)
             break;
         }
       } while(read_header > 0);
@@ -105,7 +106,7 @@ int main(int argc, char * argv[]) {
           printf("%c", c[0]);
       } while(read_header > 0);
     }
-
+    printf("Hello\n");
     minet_close(fd);
     free(req);
     /*close socket and deinitialize */

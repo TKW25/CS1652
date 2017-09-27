@@ -95,6 +95,8 @@ int handle_connection(int sock) {
 	//Check for blank line signifying connection closed
 	if((strcmp(buffer, "\r\n") == 0) | (strcmp(buffer, "\n") == 0)) 
 	    break;
+	else if(strstr(buffer, "\r\n\r\n"))
+	    break;
 	strcat(b_buffer, buffer);
 	memset(buffer, '\0', BUFSIZE);
     }
