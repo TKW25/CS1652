@@ -12,10 +12,10 @@ Bob Colleran:
     Username: rjc59
     
 ## Included files
-TBD
+http_client.cc, http_server1.cc, http_server2.cc
 
 ## Compilation steps
-TBD
+Source files go in src/apps, run the Makefile in the minet folder, executables will be in bin
 
 ## Not working
-Nothing (hopefully)
+N/A

@@ -92,8 +92,8 @@ int handle_connection(int sock) {
 ;
     //minet_read returning 0 -> socket closed
     while(minet_read(sock, buffer, BUFSIZE - 1) != 0){
-	//Check for blank line, we might need to expand this to work with \n too
-	if(strcmp(buffer, "\r\n") == 0) 
+	//Check for blank line signifying connection closed
+	if((strcmp(buffer, "\r\n") == 0) | (strcmp(buffer, "\n") == 0)) 
 	    break;
 	strcat(b_buffer, buffer);
 	memset(buffer, '\0', BUFSIZE);
@@ -163,13 +163,15 @@ int handle_connection(int sock) {
 	
     } else {
 	// send error response
-	minet_write(sock, strdup(notok_response), strlen(notok_response)*sizeof(char));
+	char outp[strlen(notok_response)];
+	sprintf(outp, notok_response);
+	minet_write(sock, outp, strlen(notok_response)*sizeof(char));
     }
     
     /* close socket and free space */
     minet_close(sock);
     free(contents);
-    printf("Done...\n");
+    printf("Done with connection...\n");
     if (ok) {
 	return 0;
     } else {
