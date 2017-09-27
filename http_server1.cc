@@ -95,8 +95,10 @@ int handle_connection(int sock) {
 	//Check for blank line signifying connection closed
 	if((strcmp(buffer, "\r\n") == 0) | (strcmp(buffer, "\n") == 0)) 
 	    break;
-	else if(strstr(buffer, "\r\n\r\n"))
+	else if(strstr(buffer, "\r\n\r\n")){
+	    strcat(b_buffer, buffer);
 	    break;
+	}
 	strcat(b_buffer, buffer);
 	memset(buffer, '\0', BUFSIZE);
     }
@@ -112,6 +114,7 @@ int handle_connection(int sock) {
 	if(!strcmp(str, "GET")){
 	    str = strtok(NULL, " /\n");
 	    file = str;
+	    printf(file);
 	    break; //For now we don't care about anything else
 	}
 	else{ //Placeholder mostly for testing the loop's behavior
