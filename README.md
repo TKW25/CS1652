@@ -1,24 +1,4 @@
 # CS1652
-
-## Temporary TODO
-Implement http_client.cc
-
-     Everything
-     
-Implement http_server1.cc
-
-     Done, more extensive testing should be done after we finish the client,
-     but it passed the basic tests I ran it through
-     
-Implement http_server2.cc
-
-     Test and debug
-     
-Implement http_server3.cc
-
-     Everything
-     
-
 ## Group Members
 Taimah Williams:
 
