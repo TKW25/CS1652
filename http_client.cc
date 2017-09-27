@@ -63,9 +63,13 @@ int main(int argc, char * argv[]) {
     printf("usdklfsdjklfsjdklfsjkld\n");
     /* send request message */
     sprintf(req, "GET %s HTTP/1.0\r\n\r\n", server_path);
-    printf("uisdiuusdufsu\n");
     minet_write(fd, req, strlen(req)*sizeof(char));
-    printf("skjdfkljsdfjls\n");
+    if (server_path[0] == '/')
+      sprintf(req, "GET %s HTTP/1.0\r\n\r\n", server_path);
+    else
+      sprintf(req, "GET /%s HTTP/1.0\r\n\r\n", server_path);
+    minet_write(fd, req, strlen(req));
+
     timeout.tv_sec = 10;
     timeout.tv_usec = 1000000;
 
